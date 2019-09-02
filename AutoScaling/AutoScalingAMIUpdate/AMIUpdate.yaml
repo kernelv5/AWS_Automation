@@ -33,10 +33,10 @@
             size: 100
             volume_type: gp2
         instance_id: "{{ instance_id }}"
-        name: "magento-web-asv1-{{ todate }}"
+        name: "node-web-asv1-{{ todate }}"
         region: "{{ region }}"
         tags:
-          Name: "magento-web-asv1-{{ todate }}"
+          Name: "node-web-asv1-{{ todate }}"
         wait: false
       register: ami
     -
@@ -47,17 +47,14 @@
         ebs_optimized: true
         image_id: "{{ ami.image_id }}"
         instance_monitoring: true
-        instance_profile_name: magento-web-role
+        instance_profile_name: node-web-role
         instance_type: r4.2xlarge
         key_name: hobbyking
-        name: "magento-web-asv1-{{ todate }}"
+        name: "node-web-asv1-{{ todate }}"
         region: "{{ region }}"
         security_groups:
-          - hobbyking-sg
-          - masterson-sg
-          - hobbyking-uat-sg
-          - webserver-sg
-          - vpc-sg
+          - SecurityGroup1
+          - SecurityGroup2
         volumes:
           -
             delete_on_termination: true
