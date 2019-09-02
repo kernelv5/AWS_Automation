@@ -1,4 +1,4 @@
-AWS AutoScaling with Ansible ( DevOps / Automation ) 
+# AWS AutoScaling with Ansible ( DevOps / Automation ) 
 
 This script applicable if you already have 
 - Auto Scaling Group
