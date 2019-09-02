@@ -1,0 +1,94 @@
+---
+-
+  connection: local
+  hosts: localhost
+  vars:
+    aws_access_key: AKIA**********
+    aws_secret_key: zHCG*********************
+    instance_id: i-02d8******** # AMI Image ID Name
+    asg_name_destination: ma********** # Auto Scaling Name
+    region: us-west-2 # Example 
+  name: "AutoScaling"
+  tasks:
+    -
+      set_fact: "todate={{lookup('pipe','date +%Y-%m-%d-%H-%M-%S')}}"
+    -
+      ec2:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        instance_id: "{{ instance_id }}"
+        region: "{{ region }}"
+        state: running
+    -
+      pause:
+        minutes: 5
+    -
+      ec2_ami:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        device_mapping:
+          -
+            delete_on_termination: true
+            device_name: /dev/sda1
+            size: 100
+            volume_type: gp2
+        instance_id: "{{ instance_id }}"
+        name: "magento-web-asv1-{{ todate }}"
+        region: "{{ region }}"
+        tags:
+          Name: "magento-web-asv1-{{ todate }}"
+        wait: false
+      register: ami
+    -
+      debug:
+        var: ami.image_id
+    -      ec2_lc:
+        assign_public_ip: true
+        ebs_optimized: true
+        image_id: "{{ ami.image_id }}"
+        instance_monitoring: true
+        instance_profile_name: magento-web-role
+        instance_type: r4.2xlarge
+        key_name: hobbyking
+        name: "magento-web-asv1-{{ todate }}"
+        region: "{{ region }}"
+        security_groups:
+          - hobbyking-sg
+          - masterson-sg
+          - hobbyking-uat-sg
+          - webserver-sg
+          - vpc-sg
+        volumes:
+          -
+            delete_on_termination: true
+            device_name: /dev/sda1
+            volume_size: 100
+            volume_type: gp2
+      register: lc
+    -
+      debug:
+        var: lc.result.launch_configuration_name
+    -
+      ec2:
+        aws_access_key: "{{ aws_access_key }}"
+        aws_secret_key: "{{ aws_secret_key }}"
+        instance_id: "{{ instance_id }}"
+        region: "{{ region }}"
+        state: stopped
+    -
+      ec2_asg_facts:
+        name: "{{ asg_name_destination }}"
+        region: "{{ region }}"
+      register: asgs
+
+    - ec2_asg:
+        name: "{{ asg_name_destination }}"
+        launch_config_name: "{{ lc.result.launch_configuration_name }}"
+        health_check_period: "{{ asgs.results[0].health_check_grace_period }}"
+        health_check_type: "{{ asgs.results[0].health_check_type }}"
+        default_cooldown: "{{ asgs.results[0].default_cooldown }}"
+        min_size: "{{ asgs.results[0].min_size }}"
+        max_size: "{{ asgs.results[0].max_size }}"
+        desired_capacity: "{{ asgs.results[0].desired_capacity }}"
+        availability_zones: "{{ asgs.results[0].availability_zones }}"
+        region: "{{ region }}"
