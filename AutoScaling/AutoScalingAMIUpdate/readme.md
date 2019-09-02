@@ -1,3 +1,5 @@
+AWS AutoScaling with Ansible ( DevOps / Automation ) 
+
 This script applicable if you already have 
 - Auto Scaling Group
 - One fixed AMI which used for AMI update
